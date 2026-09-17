@@ -1,79 +1,70 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
 
 using namespace std;
 
 // ==========================================
-// PARÁMETROS: Estructuras de Datos (Campos)
+// PARÁMETROS: Estructura de Datos (Campos)
 // ==========================================
 
 class Libro {
 public:
     // Parámetros de descripción e identificación
-    string isbn;
-    string titulo;
-    string autor;
-    string signaturaTopografica; // Ubicación en estante (Ej: Dewie/LC)
-    
-    // Parámetros de gestión de ejemplares
-    bool disponible;
-    string prestadoA; // Guarda el ID del usuario si está prestado
+    string isbn;                 // Identificador único del libro
+    string titulo;                // Título de la obra
+    string autor;                 // Autor de la obra
+    string signaturaTopografica;  // Ubicación en estante (Ej: Dewey/LC)
+    bool disponible;              // Estado del ejemplar (true = en estantería)
 
+    // Parámetros del constructor: valores necesarios para crear un Libro
     Libro(string _isbn, string _titulo, string _autor, string _signatura) {
         isbn = _isbn;
         titulo = _titulo;
         autor = _autor;
         signaturaTopografica = _signatura;
         disponible = true;
-        prestadoA = "";
-    }
-};
-
-class Usuario {
-public:
-    string idUsuario;
-    string nombre;
-
-    Usuario(string _id, string _nombre) {
-        idUsuario = _id;
-        nombre = _nombre;
     }
 };
 
 // ==========================================
-// MÓDULOS: Lógica del Sistema de Biblioteca
+// MÓDULO: Catálogo
 // ==========================================
+// Funciones:
+//   1. registrarLibro(isbn, titulo, autor, signatura)
+//      -> Agrega un nuevo libro al catálogo.
+//   2. buscarPorTitulo(termino)
+//      -> Busca libros cuyo título contenga el término dado.
+//   3. listarCatalogo()
+//      -> Muestra todos los libros registrados.
 
-class SistemaBiblioteca {
+class Catalogo {
 private:
-    vector<Libro> catalogo;
-    vector<Usuario> usuarios;
+    vector<Libro> catalogo; // Parámetro: colección interna de libros
 
 public:
-    // 1. MÓDULO DE CATALOGACIÓN: Agregar libros al inventario
+    // Función: registrarLibro
+    // Parámetros:
+    //   isbn      - Código ISBN del libro (string)
+    //   titulo    - Título del libro (string)
+    //   autor     - Autor del libro (string)
+    //   signatura - Signatura topográfica / ubicación en estante (string)
     void registrarLibro(string isbn, string titulo, string autor, string signatura) {
         Libro nuevoLibro(isbn, titulo, autor, signatura);
         catalogo.push_back(nuevoLibro);
         cout << "✔️ Libro '" << titulo << "' catalogado con exito.\n";
     }
 
-    // Registro auxiliar de usuarios
-    void registrarUsuario(string id, string nombre) {
-        usuarios.push_back(Usuario(id, nombre));
-        cout << "✔️ Usuario '" << nombre << "' registrado.\n";
-    }
-
-    // 2. MÓDULO DE BÚSQUEDA (OPAC): Buscar por distintos parámetros
+    // Función: buscarPorTitulo
+    // Parámetros:
+    //   termino - Texto a buscar dentro de los títulos (string)
     void buscarPorTitulo(string termino) {
         cout << "\n--- RESULTADOS DE BÚSQUEDA PARA: \"" << termino << "\" ---\n";
         bool encontrado = false;
         for (const auto& libro : catalogo) {
-            // Conversión rápida a minúsculas simulada para búsqueda flexible
             if (libro.titulo.find(termino) != string::npos) {
-                cout << "[" << libro.signaturaTopografica << "] " 
-                     << libro.titulo << " - " << libro.autor 
+                cout << "[" << libro.signaturaTopografica << "] "
+                     << libro.titulo << " - " << libro.autor
                      << " (ISBN: " << libro.isbn << ") | "
                      << (libro.disponible ? "Disponible" : "Prestado") << "\n";
                 encontrado = true;
@@ -81,51 +72,21 @@ public:
         }
         if (!encontrado) cout << "No se encontraron coincidencias.\n";
     }
-     // 3. MÓDULO DE CIRCULACIÓN: Control de Préstamos y Devoluciones
-    void prestarLibro(string isbn, string idUsuario) {
-        // Verificar si el usuario existe
-        bool usuarioExiste = false;
-        for (const auto& u : usuarios) {
-            if (u.idUsuario == idUsuario) { usuarioExiste = true; break; }
-        }
 
-        if (!usuarioExiste) {
-            cout << "❌ Error: El usuario con ID " << idUsuario << " no esta registrado.\n";
+    // Función: listarCatalogo
+    // Parámetros: ninguno
+    void listarCatalogo() {
+        cout << "\n--- CATÁLOGO COMPLETO ---\n";
+        if (catalogo.empty()) {
+            cout << "El catálogo está vacío.\n";
             return;
         }
-
-        // Buscar el libro y cambiar su estado
-        for (auto& libro : catalogo) {
-            if (libro.isbn == isbn) {
-                if (libro.disponible) {
-                    libro.disponible = false;
-                    libro.prestadoA = idUsuario;
-                    cout << "📋 Prestamo exitoso: '" << libro.titulo << "' prestado al usuario " << idUsuario << ".\n";
-                    return;
-                } else {
-                    cout << "❌ Error: El libro ya se encuentra prestado.\n";
-                    return;
-                }
-            }
+        for (const auto& libro : catalogo) {
+            cout << "[" << libro.signaturaTopografica << "] "
+                 << libro.titulo << " - " << libro.autor
+                 << " (ISBN: " << libro.isbn << ") | "
+                 << (libro.disponible ? "Disponible" : "Prestado") << "\n";
         }
-        cout << "❌ Error: El ISBN " << isbn << " no existe en el catalogo.\n";
-    }
-
-    void devolverLibro(string isbn) {
-        for (auto& libro : catalogo) {
-            if (libro.isbn == isbn) {
-                if (!libro.disponible) {
-                    libro.disponible = true;
-                    libro.prestadoA = "";
-                    cout << "🔄 Devolucion exitosa: '" << libro.titulo << "' vuelve a estar disponible.\n";
-                    return;
-                } else {
-                    cout << "⚠️ El libro ya estaba disponible en estanteria.\n";
-                    return;
-                }
-            }
-        }
-        cout << "❌ Error: El ISBN " << isbn << " no pertenece a la biblioteca.\n";
     }
 };
 
@@ -134,26 +95,15 @@ public:
 // ==========================================
 
 int main() {
-    SistemaBiblioteca biblioteca;
+    Catalogo catalogo;
 
-    cout << "=== SIMULACIÓN DE SISTEMA DE BIBLIOTECA ===\n\n";
+    cout << "=== MÓDULO DE CATÁLOGO ===\n\n";
 
-    // Probar Módulo de Catalogación
-    biblioteca.registrarLibro("9780307474728", "Cien anos de soledad", "Gabriel Garcia Marquez", "863.44 G216c");
-    biblioteca.registrarLibro("9780451524935", "1984", "George Orwell", "823.912 O79n");
-    biblioteca.registrarUsuario("U001", "Carlos Gomez");
+    catalogo.registrarLibro("9780307474728", "Cien anos de soledad", "Gabriel Garcia Marquez", "863.44 G216c");
+    catalogo.registrarLibro("9780451524935", "1984", "George Orwell", "823.912 O79n");
 
-    // Probar Módulo OPAC (Búsqueda)
-    biblioteca.buscarPorTitulo("soledad");
-
-    // Probar Módulo de Circulación (Préstamo)
-    biblioteca.prestarLibro("9780307474728", "U001");
-
-    // Volver a buscar para ver el cambio de estado (Parámetro dinámico)
-    biblioteca.buscarPorTitulo("Cien anos");
-
-    // Probar Módulo de Circulación (Devolución)
-    biblioteca.devolverLibro("9780307474728");
+    catalogo.buscarPorTitulo("soledad");
+    catalogo.listarCatalogo();
 
     return 0;
 }
