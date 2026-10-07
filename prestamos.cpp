@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <cctype>
 using namespace std;
 
 // ===== CONSTANTES =====
@@ -36,16 +38,21 @@ struct Prestamo {
 };
 
 // ===== PROTOTIPOS =====
-// Préstamos
 int buscarLibro(const Libro libros[], int cantidadLibros, string codigo);
 bool existePrestamoActivo(const Prestamo prestamos[], int cantidadPrestamos,
                           string idUsuario, string codigoLibro);
+string aMayusculas(string texto);
+bool validarCodigoLibro(string codigo);
+bool validarIdUsuario(string id);
 bool crearPrestamo(Prestamo prestamos[], int &cantidadPrestamos,
                    Libro libros[], int cantidadLibros,
                    int idPrestamo, string idUsuario, string codigoLibro, Fecha fecha);
 bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
                          Libro libros[], int cantidadLibros,
                          int idPrestamo, Fecha fechaDevolucion);
+int contarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos);
+void guardarPrestamos(const Prestamo prestamos[], int cantidadPrestamos);
+int cargarPrestamos(Prestamo prestamos[]);
 
 // ===== MÓDULO PRÉSTAMOS =====
 
@@ -70,12 +77,69 @@ bool existePrestamoActivo(const Prestamo prestamos[], int cantidadPrestamos,
     return false;
 }
 
+// ----- CADENAS -----
+
+// Convierte un texto a mayúsculas: "l001" pasa a "L001"
+string aMayusculas(string texto) {
+    for (int i = 0; i < texto.length(); i++) {
+        texto[i] = toupper(texto[i]);
+    }
+    return texto;
+}
+
+// Código de libro válido: una L y 3 números (ejemplo: L001)
+bool validarCodigoLibro(string codigo) {
+    if (codigo.length() != 4) {
+        return false;
+    }
+    if (codigo[0] != 'L') {
+        return false;
+    }
+    for (int i = 1; i < 4; i++) {
+        if (codigo[i] < '0' || codigo[i] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ID de usuario válido: una U y 2 números (ejemplo: U01)
+bool validarIdUsuario(string id) {
+    if (id.length() != 3) {
+        return false;
+    }
+    if (id[0] != 'U') {
+        return false;
+    }
+    for (int i = 1; i < 3; i++) {
+        if (id[i] < '0' || id[i] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ----- OPERACIONES -----
+
 bool crearPrestamo(Prestamo prestamos[], int &cantidadPrestamos,
                    Libro libros[], int cantidadLibros,
                    int idPrestamo, string idUsuario, string codigoLibro, Fecha fecha) {
 
     if (cantidadPrestamos >= MAX_PRESTAMOS) {
         cout << "[ERROR] No hay espacio para más préstamos." << endl;
+        return false;
+    }
+
+    // Normalizar y validar los identificadores
+    codigoLibro = aMayusculas(codigoLibro);
+    idUsuario = aMayusculas(idUsuario);
+
+    if (!validarCodigoLibro(codigoLibro)) {
+        cout << "[ERROR] Código de libro inválido: " << codigoLibro << endl;
+        return false;
+    }
+    if (!validarIdUsuario(idUsuario)) {
+        cout << "[ERROR] ID de usuario inválido: " << idUsuario << endl;
         return false;
     }
 
@@ -137,6 +201,86 @@ bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
     return false;
 }
 
+// ----- RECURSIVIDAD -----
+
+// Cuenta recursivamente los préstamos activos
+int contarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos) {
+    // CASO BASE: si no quedan préstamos por revisar, hay 0 activos
+    if (cantidadPrestamos == 0) {
+        return 0;
+    }
+    // CASO RECURSIVO: reviso el último préstamo y sumo el resultado del resto
+    int actual = 0;
+    if (prestamos[cantidadPrestamos - 1].activo) {
+        actual = 1;
+    }
+    return actual + contarPrestamosActivos(prestamos, cantidadPrestamos - 1);
+}
+
+// ----- ARCHIVOS -----
+
+// Guarda todos los préstamos en prestamos.txt
+void guardarPrestamos(const Prestamo prestamos[], int cantidadPrestamos) {
+    ofstream archivo("prestamos.txt");
+
+    if (!archivo) {
+        cout << "[ERROR] No se pudo abrir prestamos.txt para guardar." << endl;
+        return;
+    }
+
+    // Primera línea: cuántos préstamos hay
+    archivo << cantidadPrestamos << endl;
+
+    // Una línea por préstamo, con los datos separados por espacios
+    for (int i = 0; i < cantidadPrestamos; i++) {
+        archivo << prestamos[i].idPrestamo << " "
+                << prestamos[i].codigoLibro << " "
+                << prestamos[i].idUsuario << " "
+                << prestamos[i].fechaPrestamo.dia << " "
+                << prestamos[i].fechaPrestamo.mes << " "
+                << prestamos[i].fechaPrestamo.anio << " "
+                << prestamos[i].fechaDevolucion.dia << " "
+                << prestamos[i].fechaDevolucion.mes << " "
+                << prestamos[i].fechaDevolucion.anio << " "
+                << prestamos[i].activo << endl;
+    }
+
+    archivo.close();
+}
+
+// Lee prestamos.txt y llena el arreglo. Devuelve cuántos préstamos cargó
+int cargarPrestamos(Prestamo prestamos[]) {
+    ifstream archivo("prestamos.txt");
+
+    // Si el archivo no existe todavía (primera vez), empezamos en 0
+    if (!archivo) {
+        return 0;
+    }
+
+    int cantidad;
+    archivo >> cantidad;
+
+    if (cantidad > MAX_PRESTAMOS) {
+        cantidad = MAX_PRESTAMOS;
+    }
+
+    for (int i = 0; i < cantidad; i++) {
+        archivo >> prestamos[i].idPrestamo
+                >> prestamos[i].codigoLibro
+                >> prestamos[i].idUsuario
+                >> prestamos[i].fechaPrestamo.dia
+                >> prestamos[i].fechaPrestamo.mes
+                >> prestamos[i].fechaPrestamo.anio
+                >> prestamos[i].fechaDevolucion.dia
+                >> prestamos[i].fechaDevolucion.mes
+                >> prestamos[i].fechaDevolucion.anio
+                >> prestamos[i].activo;
+    }
+
+    archivo.close();
+    return cantidad;
+}
+
 // ===== MAIN (solo de prueba, se reemplaza al integrar) =====
 int main() {
     Libro libros[MAX_LIBROS];
@@ -151,25 +295,29 @@ int main() {
     libros[1].cantidadDisponible = 0;
 
     Prestamo prestamos[MAX_PRESTAMOS];
-    int cantidadPrestamos = 0;
+    int cantidadPrestamos = cargarPrestamos(prestamos);
+    cout << "Préstamos cargados del archivo: " << cantidadPrestamos << endl;
 
     Fecha hoy;
     hoy.dia = 8;
     hoy.mes = 10;
     hoy.anio = 2026;
 
-    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, "U01", "L001", hoy);
-    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 2, "U01", "L001", hoy);
-    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 3, "U02", "L999", hoy);
-    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 4, "U02", "L002", hoy);
+    // Préstamo válido (en minúsculas para probar la normalización)
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros,
+                  cantidadPrestamos + 1, "u01", "l001", hoy);
+    // Libro con formato válido pero que no existe
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros,
+                  cantidadPrestamos + 1, "U02", "L999", hoy);
+    // Libro sin ejemplares disponibles
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros,
+                  cantidadPrestamos + 1, "U02", "L002", hoy);
+    // Código con formato inválido
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros,
+                  cantidadPrestamos + 1, "U03", "X999", hoy);
 
-    cout << "Préstamos: " << cantidadPrestamos << endl;
-    cout << "Disponibles de L001: " << libros[0].cantidadDisponible << endl;
+    cout << "Préstamos activos: " << contarPrestamosActivos(prestamos, cantidadPrestamos) << endl;
 
-    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, hoy);
-    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, hoy);
-    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 99, hoy);
-
-    cout << "Disponibles de L001 tras devolver: " << libros[0].cantidadDisponible << endl;
+    guardarPrestamos(prestamos, cantidadPrestamos);
     return 0;
 }
