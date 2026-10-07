@@ -1,17 +1,19 @@
 #include <iostream>
 #include <string>
-#include <vector>
-
 using namespace std;
 
-// Registro anidado para la fecha
+// ===== CONSTANTES =====
+const int MAX_LIBROS = 100;
+const int MAX_USUARIOS = 100;
+const int MAX_PRESTAMOS = 200;
+
+// ===== STRUCTS COMPARTIDOS =====
 struct Fecha {
     int dia;
     int mes;
     int anio;
 };
 
-// Estructuras base del sistema
 struct Libro {
     string codigo;
     string titulo;
@@ -30,102 +32,144 @@ struct Prestamo {
     string idUsuario;
     Fecha fechaPrestamo;
     Fecha fechaDevolucion;
-    bool activo; // true: Préstamo activo | false: Devuelto
+    bool activo;
 };
 
-// --- FUNCIONES AUXILIARES ---
+// ===== PROTOTIPOS =====
+// Préstamos
+int buscarLibro(const Libro libros[], int cantidadLibros, string codigo);
+bool existePrestamoActivo(const Prestamo prestamos[], int cantidadPrestamos,
+                          string idUsuario, string codigoLibro);
+bool crearPrestamo(Prestamo prestamos[], int &cantidadPrestamos,
+                   Libro libros[], int cantidadLibros,
+                   int idPrestamo, string idUsuario, string codigoLibro, Fecha fecha);
+bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
+                         Libro libros[], int cantidadLibros,
+                         int idPrestamo, Fecha fechaDevolucion);
 
-// Busca un libro por su código y retorna su índice
-int buscarLibroPorCodigo(const vector<Libro>& libros, const string& codigo) {
-    for (size_t i = 0; i < libros.size(); ++i) {
+// ===== MÓDULO PRÉSTAMOS =====
+
+int buscarLibro(const Libro libros[], int cantidadLibros, string codigo) {
+    for (int i = 0; i < cantidadLibros; i++) {
         if (libros[i].codigo == codigo) {
-            return static_cast<int>(i);
+            return i;
         }
     }
     return -1;
 }
 
-// Verifica si el usuario ya tiene un préstamo activo del mismo libro
-bool existePrestamoActivo(const vector<Prestamo>& prestamos, const string& idUsuario, const string& codigoLibro) {
-    for (const auto& p : prestamos) {
-        if (p.idUsuario == idUsuario && p.codigoLibro == codigoLibro && p.activo) {
+bool existePrestamoActivo(const Prestamo prestamos[], int cantidadPrestamos,
+                          string idUsuario, string codigoLibro) {
+    for (int i = 0; i < cantidadPrestamos; i++) {
+        if (prestamos[i].idUsuario == idUsuario &&
+            prestamos[i].codigoLibro == codigoLibro &&
+            prestamos[i].activo) {
             return true;
         }
     }
     return false;
 }
 
-// --- FUNCIONES DEL MÓDULO DE PRÉSTAMOS ---
+bool crearPrestamo(Prestamo prestamos[], int &cantidadPrestamos,
+                   Libro libros[], int cantidadLibros,
+                   int idPrestamo, string idUsuario, string codigoLibro, Fecha fecha) {
 
-// Registra un nuevo préstamo validando existencia, stock y duplicados
-bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros, int idPrestamo, const string& idUsuario, const string& codigoLibro, Fecha fecha) {
-    int idxLibro = buscarLibroPorCodigo(libros, codigoLibro);
-
-    // 1. Validar existencia del libro
-    if (idxLibro == -1) {
-        cout << "[ERROR] El libro con código '" << codigoLibro << "' no existe." << endl;
+    if (cantidadPrestamos >= MAX_PRESTAMOS) {
+        cout << "[ERROR] No hay espacio para más préstamos." << endl;
         return false;
     }
 
-    // 2. Validar disponibilidad de ejemplares
-    if (libros[idxLibro].cantidadDisponible <= 0) {
-        cout << "[ERROR] No hay ejemplares disponibles del libro '" << libros[idxLibro].titulo << "'." << endl;
+    int pos = buscarLibro(libros, cantidadLibros, codigoLibro);
+    if (pos == -1) {
+        cout << "[ERROR] El libro " << codigoLibro << " no existe." << endl;
         return false;
     }
 
-    // 3. Validar préstamos duplicados activos del mismo ejemplar
-    if (existePrestamoActivo(prestamos, idUsuario, codigoLibro)) {
-        cout << "[ERROR] El usuario ya tiene un préstamo activo del libro '" << codigoLibro << "'." << endl;
+    if (libros[pos].cantidadDisponible <= 0) {
+        cout << "[ERROR] No hay ejemplares disponibles de ese libro." << endl;
         return false;
     }
 
-    // Registrar nuevo préstamo
-    Prestamo nuevoPrestamo;
-    nuevoPrestamo.idPrestamo = idPrestamo;
-    nuevoPrestamo.codigoLibro = codigoLibro;
-    nuevoPrestamo.idUsuario = idUsuario;
-    nuevoPrestamo.fechaPrestamo = fecha;
-    nuevoPrestamo.fechaDevolucion = {0, 0, 0};
-    nuevoPrestamo.activo = true;
+    if (existePrestamoActivo(prestamos, cantidadPrestamos, idUsuario, codigoLibro)) {
+        cout << "[ERROR] El usuario ya tiene ese libro prestado." << endl;
+        return false;
+    }
 
-    prestamos.push_back(nuevoPrestamo);
+    prestamos[cantidadPrestamos].idPrestamo = idPrestamo;
+    prestamos[cantidadPrestamos].codigoLibro = codigoLibro;
+    prestamos[cantidadPrestamos].idUsuario = idUsuario;
+    prestamos[cantidadPrestamos].fechaPrestamo = fecha;
+    prestamos[cantidadPrestamos].fechaDevolucion.dia = 0;
+    prestamos[cantidadPrestamos].fechaDevolucion.mes = 0;
+    prestamos[cantidadPrestamos].fechaDevolucion.anio = 0;
+    prestamos[cantidadPrestamos].activo = true;
 
-    // Actualizar inmediatamente la disponibilidad del libro
-    libros[idxLibro].cantidadDisponible--;
+    cantidadPrestamos++;
+    libros[pos].cantidadDisponible--;
 
-    cout << "[ÉXITO] Préstamo #" << idPrestamo << " registrado correctamente." << endl;
+    cout << "[ÉXITO] Préstamo " << idPrestamo << " registrado." << endl;
     return true;
 }
 
-// Registra la devolución de un libro y actualiza el inventario
-bool registrarDevolucion(vector<Prestamo>& prestamos, vector<Libro>& libros, int idPrestamo, Fecha fechaDevolucion) {
-    for (auto& p : prestamos) {
-        if (p.idPrestamo == idPrestamo && p.activo) {
-            p.activo = false;
-            p.fechaDevolucion = fechaDevolucion;
+bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
+                         Libro libros[], int cantidadLibros,
+                         int idPrestamo, Fecha fechaDevolucion) {
 
-            // Restablecer la disponibilidad en el inventario
-            int idxLibro = buscarLibroPorCodigo(libros, p.codigoLibro);
-            if (idxLibro != -1) {
-                libros[idxLibro].cantidadDisponible++;
+    for (int i = 0; i < cantidadPrestamos; i++) {
+        if (prestamos[i].idPrestamo == idPrestamo && prestamos[i].activo) {
+
+            prestamos[i].activo = false;
+            prestamos[i].fechaDevolucion = fechaDevolucion;
+
+            int pos = buscarLibro(libros, cantidadLibros, prestamos[i].codigoLibro);
+            if (pos != -1) {
+                libros[pos].cantidadDisponible++;
+            } else {
+                cout << "[AVISO] No se encontró el libro del préstamo." << endl;
             }
 
-            cout << "[ÉXITO] Devolución del préstamo #" << idPrestamo << " registrada exitosamente." << endl;
+            cout << "[ÉXITO] Préstamo " << idPrestamo << " devuelto." << endl;
             return true;
         }
     }
 
-    cout << "[ERROR] No se encontró un préstamo activo con el ID " << idPrestamo << "." << endl;
+    cout << "[ERROR] No existe un préstamo activo con el número " << idPrestamo << "." << endl;
     return false;
 }
 
-// Muestra en consola los préstamos registrados
-void consultarPrestamos(const vector<Prestamo>& prestamos) {
-    cout << "\n--- HISTORIAL DE PRÉSTAMOS ---" << endl;
-    for (const auto& p : prestamos) {
-        cout << "ID Préstamo: " << p.idPrestamo 
-             << " | Usuario: " << p.idUsuario 
-             << " | Libro: " << p.codigoLibro 
-             << " | Estado: " << (p.activo ? "ACTIVO" : "DEVUELTO") << endl;
-    }
+// ===== MAIN (solo de prueba, se reemplaza al integrar) =====
+int main() {
+    Libro libros[MAX_LIBROS];
+    int cantidadLibros = 2;
+    libros[0].codigo = "L001";
+    libros[0].titulo = "Algoritmos";
+    libros[0].cantidadTotal = 2;
+    libros[0].cantidadDisponible = 2;
+    libros[1].codigo = "L002";
+    libros[1].titulo = "Estructuras de Datos";
+    libros[1].cantidadTotal = 1;
+    libros[1].cantidadDisponible = 0;
+
+    Prestamo prestamos[MAX_PRESTAMOS];
+    int cantidadPrestamos = 0;
+
+    Fecha hoy;
+    hoy.dia = 8;
+    hoy.mes = 10;
+    hoy.anio = 2026;
+
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, "U01", "L001", hoy);
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 2, "U01", "L001", hoy);
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 3, "U02", "L999", hoy);
+    crearPrestamo(prestamos, cantidadPrestamos, libros, cantidadLibros, 4, "U02", "L002", hoy);
+
+    cout << "Préstamos: " << cantidadPrestamos << endl;
+    cout << "Disponibles de L001: " << libros[0].cantidadDisponible << endl;
+
+    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, hoy);
+    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 1, hoy);
+    registrarDevolucion(prestamos, cantidadPrestamos, libros, cantidadLibros, 99, hoy);
+
+    cout << "Disponibles de L001 tras devolver: " << libros[0].cantidadDisponible << endl;
+    return 0;
 }
