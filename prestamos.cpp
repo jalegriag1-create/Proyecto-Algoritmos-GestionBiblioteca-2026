@@ -52,6 +52,9 @@ bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
 bool registrarDevolucion(vector<Prestamo>& prestamos, vector<Libro>& libros,
                          int idPrestamo, Fecha fechaDevolucion);
 void consultarPrestamos(const vector<Prestamo>& prestamos);
+void mostrarPrestamosActivos(const vector<Prestamo>& prestamos, const vector<Libro>& libros);
+void mostrarPrestamosPorUsuario(const vector<Prestamo>& prestamos, string idUsuario);
+void mostrarLibroMasPrestado(const vector<Prestamo>& prestamos, const vector<Libro>& libros);
 int contarPrestamosActivos(const vector<Prestamo>& prestamos, int cantidad);
 void mostrarMatrizPorMes(const vector<Prestamo>& prestamos);
 void guardarPrestamos(const vector<Prestamo>& prestamos);
@@ -336,6 +339,105 @@ void consultarPrestamos(const vector<Prestamo>& prestamos) {
              << " | Libro: " << prestamos[i].codigoLibro
              << " | Estado: " << estado << endl;
     }
+}
+
+// ----- REPORTES -----
+
+// Muestra solo los préstamos que siguen activos (libros prestados actualmente)
+void mostrarPrestamosActivos(const vector<Prestamo>& prestamos, const vector<Libro>& libros) {
+    cout << "\n--- LIBROS PRESTADOS ACTUALMENTE ---" << endl;
+
+    int cantidad = prestamos.size();
+    int encontrados = 0;
+
+    for (int i = 0; i < cantidad; i++) {
+        if (prestamos[i].activo) {
+            // Busco el título del libro para mostrarlo
+            string titulo = prestamos[i].codigoLibro;
+            int pos = buscarLibroPorCodigo(libros, prestamos[i].codigoLibro);
+            if (pos != -1) {
+                titulo = libros[pos].titulo;
+            }
+
+            cout << "ID Préstamo: " << prestamos[i].idPrestamo
+                 << " | Libro: " << titulo
+                 << " | Usuario: " << prestamos[i].idUsuario
+                 << " | Fecha: " << prestamos[i].fechaPrestamo.dia << "/"
+                 << prestamos[i].fechaPrestamo.mes << "/"
+                 << prestamos[i].fechaPrestamo.anio << endl;
+            encontrados++;
+        }
+    }
+
+    if (encontrados == 0) {
+        cout << "No hay libros prestados actualmente." << endl;
+    }
+}
+
+// Muestra el historial de préstamos de un solo usuario
+void mostrarPrestamosPorUsuario(const vector<Prestamo>& prestamos, string idUsuario) {
+    idUsuario = aMayusculas(idUsuario);
+    cout << "\n--- PRÉSTAMOS DEL USUARIO " << idUsuario << " ---" << endl;
+
+    int cantidad = prestamos.size();
+    int encontrados = 0;
+
+    for (int i = 0; i < cantidad; i++) {
+        if (prestamos[i].idUsuario == idUsuario) {
+            string estado;
+            if (prestamos[i].activo) {
+                estado = "ACTIVO";
+            } else {
+                estado = "DEVUELTO";
+            }
+
+            cout << "ID Préstamo: " << prestamos[i].idPrestamo
+                 << " | Libro: " << prestamos[i].codigoLibro
+                 << " | Estado: " << estado << endl;
+            encontrados++;
+        }
+    }
+
+    if (encontrados == 0) {
+        cout << "Este usuario no tiene préstamos registrados." << endl;
+    }
+}
+
+// Muestra el libro con más préstamos (el de mayor movimiento)
+void mostrarLibroMasPrestado(const vector<Prestamo>& prestamos, const vector<Libro>& libros) {
+    cout << "\n--- LIBRO CON MAYOR MOVIMIENTO ---" << endl;
+
+    int cantidad = prestamos.size();
+    if (cantidad == 0) {
+        cout << "Todavía no hay préstamos registrados." << endl;
+        return;
+    }
+
+    string codigoMayor = "";
+    int mayor = 0;
+
+    // Para cada préstamo cuento cuántos préstamos tienen el mismo libro
+    for (int i = 0; i < cantidad; i++) {
+        int veces = 0;
+        for (int j = 0; j < cantidad; j++) {
+            if (prestamos[j].codigoLibro == prestamos[i].codigoLibro) {
+                veces++;
+            }
+        }
+        if (veces > mayor) {
+            mayor = veces;
+            codigoMayor = prestamos[i].codigoLibro;
+        }
+    }
+
+    string titulo = codigoMayor;
+    int pos = buscarLibroPorCodigo(libros, codigoMayor);
+    if (pos != -1) {
+        titulo = libros[pos].titulo;
+    }
+
+    cout << "Libro: " << titulo << " (" << codigoMayor << ")" << endl;
+    cout << "Veces prestado: " << mayor << endl;
 }
 
 // ----- RECURSIVIDAD -----
