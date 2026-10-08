@@ -70,6 +70,8 @@ int main() {
     std::cout << "Prestamos activos: "
               << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
     moduloPrestamos::mostrarPrestamosPorUsuario(prestamos, cantidadPrestamos, "U001");
+        std::cout << "Prestamos activos de U001: "
+              << moduloPrestamos::contarPrestamosDeUsuario(prestamos, cantidadPrestamos, "U001") << '\n';
     moduloPrestamos::mostrarLibroMasPrestado(prestamos, cantidadPrestamos, libros, 1);
     moduloPrestamos::mostrarMatrizPorMes(prestamos, cantidadPrestamos);
 
