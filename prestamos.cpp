@@ -40,9 +40,12 @@ struct Prestamo {
 int buscarLibroPorCodigo(const vector<Libro>& libros, string codigo);
 bool existePrestamoActivo(const vector<Prestamo>& prestamos,
                           string idUsuario, string codigoLibro);
+bool existeIdPrestamo(const vector<Prestamo>& prestamos, int idPrestamo);
 string aMayusculas(string texto);
 bool validarCodigoLibro(string codigo);
 bool validarIdUsuario(string id);
+bool validarFecha(Fecha f);
+bool fechaEsAnterior(Fecha a, Fecha b);
 bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
                    int idPrestamo, string idUsuario, string codigoLibro, Fecha fecha);
 bool registrarDevolucion(vector<Prestamo>& prestamos, vector<Libro>& libros,
@@ -52,6 +55,7 @@ int contarPrestamosActivos(const vector<Prestamo>& prestamos, int cantidad);
 void mostrarMatrizPorMes(const vector<Prestamo>& prestamos);
 void guardarPrestamos(const vector<Prestamo>& prestamos);
 int cargarPrestamos(vector<Prestamo>& prestamos);
+void recalcularDisponibilidad(vector<Libro>& libros, const vector<Prestamo>& prestamos);
 
 // ===== MÓDULO PRÉSTAMOS =====
 
@@ -74,6 +78,17 @@ bool existePrestamoActivo(const vector<Prestamo>& prestamos,
         if (prestamos[i].idUsuario == idUsuario &&
             prestamos[i].codigoLibro == codigoLibro &&
             prestamos[i].activo) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Revisa si ya existe un préstamo con ese número
+bool existeIdPrestamo(const vector<Prestamo>& prestamos, int idPrestamo) {
+    int cantidad = prestamos.size();
+    for (int i = 0; i < cantidad; i++) {
+        if (prestamos[i].idPrestamo == idPrestamo) {
             return true;
         }
     }
@@ -123,6 +138,42 @@ bool validarIdUsuario(string id) {
     return true;
 }
 
+// ----- FECHAS -----
+
+// Fecha válida: mes entre 1 y 12, y día dentro de los días de ese mes
+bool validarFecha(Fecha f) {
+    if (f.anio < 2000 || f.anio > 2100) {
+        return false;
+    }
+    if (f.mes < 1 || f.mes > 12) {
+        return false;
+    }
+
+    // Días de cada mes (febrero se ajusta abajo si el año es bisiesto)
+    int diasPorMes[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    bool esBisiesto = (f.anio % 4 == 0 && f.anio % 100 != 0) || (f.anio % 400 == 0);
+    if (esBisiesto) {
+        diasPorMes[1] = 29;
+    }
+
+    if (f.dia < 1 || f.dia > diasPorMes[f.mes - 1]) {
+        return false;
+    }
+    return true;
+}
+
+// Devuelve true si la fecha a es anterior a la fecha b
+bool fechaEsAnterior(Fecha a, Fecha b) {
+    if (a.anio != b.anio) {
+        return a.anio < b.anio;
+    }
+    if (a.mes != b.mes) {
+        return a.mes < b.mes;
+    }
+    return a.dia < b.dia;
+}
+
 // ----- OPERACIONES -----
 
 bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
@@ -145,6 +196,10 @@ bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
         cout << "[ERROR] ID de usuario inválido: " << idUsuario << endl;
         return false;
     }
+    if (!validarFecha(fecha)) {
+        cout << "[ERROR] Fecha de préstamo inválida." << endl;
+        return false;
+    }
 
     int pos = buscarLibroPorCodigo(libros, codigoLibro);
     if (pos == -1) {
@@ -159,6 +214,11 @@ bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
 
     if (existePrestamoActivo(prestamos, idUsuario, codigoLibro)) {
         cout << "[ERROR] El usuario ya tiene ese libro prestado." << endl;
+        return false;
+    }
+
+    if (existeIdPrestamo(prestamos, idPrestamo)) {
+        cout << "[ERROR] Ya existe un préstamo con el número " << idPrestamo << "." << endl;
         return false;
     }
 
@@ -185,9 +245,19 @@ bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
 bool registrarDevolucion(vector<Prestamo>& prestamos, vector<Libro>& libros,
                          int idPrestamo, Fecha fechaDevolucion) {
 
+    if (!validarFecha(fechaDevolucion)) {
+        cout << "[ERROR] Fecha de devolución inválida." << endl;
+        return false;
+    }
+
     int cantidad = prestamos.size();
     for (int i = 0; i < cantidad; i++) {
         if (prestamos[i].idPrestamo == idPrestamo && prestamos[i].activo) {
+
+            if (fechaEsAnterior(fechaDevolucion, prestamos[i].fechaPrestamo)) {
+                cout << "[ERROR] La fecha de devolución no puede ser anterior a la del préstamo." << endl;
+                return false;
+            }
 
             prestamos[i].activo = false;
             prestamos[i].fechaDevolucion = fechaDevolucion;
@@ -341,4 +411,24 @@ int cargarPrestamos(vector<Prestamo>& prestamos) {
 
     archivo.close();
     return cantidad;
+}
+
+// Después de cargar los archivos, recalcula cuántos ejemplares hay disponibles:
+// parte del total y resta uno por cada préstamo activo de ese libro
+void recalcularDisponibilidad(vector<Libro>& libros, const vector<Prestamo>& prestamos) {
+    int cantidadLibros = libros.size();
+    int cantidadPrestamos = prestamos.size();
+
+    for (int i = 0; i < cantidadLibros; i++) {
+        libros[i].cantidadDisponible = libros[i].cantidadTotal;
+    }
+
+    for (int j = 0; j < cantidadPrestamos; j++) {
+        if (prestamos[j].activo) {
+            int pos = buscarLibroPorCodigo(libros, prestamos[j].codigoLibro);
+            if (pos != -1) {
+                libros[pos].cantidadDisponible--;
+            }
+        }
+    }
 }
