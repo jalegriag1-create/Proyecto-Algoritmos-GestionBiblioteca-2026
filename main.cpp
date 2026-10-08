@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <cctype>
 
 namespace moduloCatalogo {
 #include "catalogo.cpp"
@@ -37,17 +39,25 @@ int main() {
 
     moduloUsuarios::listarUsuarios(usuarios);
 
-    std::vector<moduloPrestamos::Libro> libros;
-    libros.push_back({"978-0001", "Introduccion a los Algoritmos", 1, 1});
+    moduloPrestamos::Libro libros[moduloPrestamos::MAX_LIBROS];
+    libros[0].codigo = "978-0001";
+    libros[0].titulo = "Introduccion a los Algoritmos";
+    libros[0].cantidadTotal = 1;
+    libros[0].cantidadDisponible = 1;
 
-    std::vector<moduloPrestamos::Prestamo> prestamos;
+    moduloPrestamos::Prestamo prestamos[moduloPrestamos::MAX_PRESTAMOS];
+    int cantidadPrestamos = 0;
     moduloPrestamos::Fecha fechaPrestamo{18, 9, 2026};
-    moduloPrestamos::crearPrestamo(prestamos, libros, 1, "U001", "978-0001", fechaPrestamo);
-    moduloPrestamos::consultarPrestamos(prestamos);
+    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
+                                   1, "U001", "978-0001", fechaPrestamo);
+    std::cout << "Prestamos activos: "
+              << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
 
     moduloPrestamos::Fecha fechaDevolucion{25, 9, 2026};
-    moduloPrestamos::registrarDevolucion(prestamos, libros, 1, fechaDevolucion);
-    moduloPrestamos::consultarPrestamos(prestamos);
+    moduloPrestamos::registrarDevolucion(prestamos, cantidadPrestamos, libros, 1,
+                                         1, fechaDevolucion);
+    std::cout << "Prestamos activos: "
+              << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
 
     std::cout << "\n--- REPORTES Y PERSISTENCIA ---\n";
     moduloReportes::generarReportePrestamos("18/09/2026", "25/09/2026");

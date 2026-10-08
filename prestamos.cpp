@@ -87,31 +87,30 @@ string aMayusculas(string texto) {
     return texto;
 }
 
-// Código de libro válido: una L y 3 números (ejemplo: L001)
+// Código de libro válido (ISBN): solo números, guiones o X, entre 4 y 17 caracteres
 bool validarCodigoLibro(string codigo) {
-    if (codigo.length() != 4) {
+    if (codigo.length() < 4 || codigo.length() > 17) {
         return false;
     }
-    if (codigo[0] != 'L') {
-        return false;
-    }
-    for (int i = 1; i < 4; i++) {
-        if (codigo[i] < '0' || codigo[i] > '9') {
+    for (int i = 0; i < codigo.length(); i++) {
+        char c = codigo[i];
+        bool esNumero = (c >= '0' && c <= '9');
+        if (!esNumero && c != '-' && c != 'X') {
             return false;
         }
     }
     return true;
 }
 
-// ID de usuario válido: una U y 2 números (ejemplo: U01)
+// ID de usuario válido: una U y 3 números (ejemplo: U001)
 bool validarIdUsuario(string id) {
-    if (id.length() != 3) {
+    if (id.length() != 4) {
         return false;
     }
     if (id[0] != 'U') {
         return false;
     }
-    for (int i = 1; i < 3; i++) {
+    for (int i = 1; i < 4; i++) {
         if (id[i] < '0' || id[i] > '9') {
             return false;
         }
