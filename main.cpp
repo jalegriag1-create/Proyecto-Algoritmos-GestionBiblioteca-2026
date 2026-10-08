@@ -56,6 +56,11 @@ int main() {
               << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
     moduloPrestamos::mostrarPrestamosActivos(prestamos, cantidadPrestamos, libros, 1);
     moduloPrestamos::mostrarCantidadLibros(libros, 1);
+    // Pruebas críticas: libro inexistente y libro sin ejemplares disponibles
+    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
+                                   2, "U002", "978-9999", fechaPrestamo);
+    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
+                                   3, "U002", "978-0001", fechaPrestamo);
     moduloPrestamos::Fecha fechaDevolucion{25, 9, 2026};
     moduloPrestamos::registrarDevolucion(prestamos, cantidadPrestamos, libros, 1,
                                          1, fechaDevolucion);
@@ -64,7 +69,7 @@ int main() {
         moduloPrestamos::mostrarPrestamosPorUsuario(prestamos, cantidadPrestamos, "U001");
     moduloPrestamos::mostrarLibroMasPrestado(prestamos, cantidadPrestamos, libros, 1);
     moduloPrestamos::mostrarMatrizPorMes(prestamos, cantidadPrestamos);
-        
+
     std::cout << "\n--- REPORTES Y PERSISTENCIA ---\n";
     moduloReportes::generarReportePrestamos("18/09/2026", "25/09/2026");
     moduloReportes::obtenerLibrosMasSolicitados(5);
