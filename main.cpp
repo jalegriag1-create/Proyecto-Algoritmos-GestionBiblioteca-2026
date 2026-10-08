@@ -49,24 +49,27 @@ int main() {
     int cantidadPrestamos = 0;
     int cargados = moduloPrestamos::iniciarPrestamos(prestamos, cantidadPrestamos, libros, 1);
     std::cout << "Prestamos cargados del archivo: " << cargados << '\n';
+    int idNuevo = cantidadPrestamos + 1;
     moduloPrestamos::Fecha fechaPrestamo{18, 9, 2026};
     moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   1, "U001", "978-0001", fechaPrestamo);
+                                   idNuevo, "U001", "978-0001", fechaPrestamo);
     std::cout << "Prestamos activos: "
               << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
     moduloPrestamos::mostrarPrestamosActivos(prestamos, cantidadPrestamos, libros, 1);
     moduloPrestamos::mostrarCantidadLibros(libros, 1);
     // Pruebas críticas: libro inexistente y libro sin ejemplares disponibles
+    int idNuevo2 = cantidadPrestamos + 1;
+    int idNuevo3 = cantidadPrestamos + 2;
     moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   2, "U002", "978-9999", fechaPrestamo);
+                                   idNuevo2, "U002", "978-9999", fechaPrestamo);
     moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   3, "U002", "978-0001", fechaPrestamo);
+                                   idNuevo3, "U002", "978-0001", fechaPrestamo);
     moduloPrestamos::Fecha fechaDevolucion{25, 9, 2026};
     moduloPrestamos::registrarDevolucion(prestamos, cantidadPrestamos, libros, 1,
-                                         1, fechaDevolucion);
+                                         idNuevo, fechaDevolucion);
     std::cout << "Prestamos activos: "
               << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
-        moduloPrestamos::mostrarPrestamosPorUsuario(prestamos, cantidadPrestamos, "U001");
+    moduloPrestamos::mostrarPrestamosPorUsuario(prestamos, cantidadPrestamos, "U001");
     moduloPrestamos::mostrarLibroMasPrestado(prestamos, cantidadPrestamos, libros, 1);
     moduloPrestamos::mostrarMatrizPorMes(prestamos, cantidadPrestamos);
 
