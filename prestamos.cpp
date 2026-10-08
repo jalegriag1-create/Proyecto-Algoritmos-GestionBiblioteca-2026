@@ -2,15 +2,12 @@
 #include <string>
 #include <fstream>
 #include <cctype>
-#include <iomanip>
 using namespace std;
 
 // ===== CONSTANTES =====
 const int MAX_LIBROS = 100;
 const int MAX_USUARIOS = 100;
 const int MAX_PRESTAMOS = 200;
-const int MESES = 12;
-const int CATEGORIAS = 5;
 
 // ===== STRUCTS COMPARTIDOS =====
 struct Fecha {
@@ -24,7 +21,6 @@ struct Libro {
     string titulo;
     int cantidadTotal;
     int cantidadDisponible;
-    int categoriaIndex; // 0: Ficción, 1: Ciencia, 2: Historia, 3: Tecnología, 4: Otros
 };
 
 struct Usuario {
@@ -55,8 +51,7 @@ bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
                          Libro libros[], int cantidadLibros,
                          int idPrestamo, Fecha fechaDevolucion);
 int contarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos);
-void generarMatrizResumenPrestamos(const Prestamo prestamos[], int cantidadPrestamos,
-                                    const Libro libros[], int cantidadLibros);
+void mostrarMatrizPorMes(const Prestamo prestamos[], int cantidadPrestamos);
 void guardarPrestamos(const Prestamo prestamos[], int cantidadPrestamos);
 int cargarPrestamos(Prestamo prestamos[]);
 
@@ -87,7 +82,7 @@ bool existePrestamoActivo(const Prestamo prestamos[], int cantidadPrestamos,
 
 // Convierte un texto a mayúsculas: "l001" pasa a "L001"
 string aMayusculas(string texto) {
-    for (size_t i = 0; i < texto.length(); i++) {
+    for (int i = 0; i < texto.length(); i++) {
         texto[i] = toupper(texto[i]);
     }
     return texto;
@@ -98,7 +93,7 @@ bool validarCodigoLibro(string codigo) {
     if (codigo.length() < 4 || codigo.length() > 17) {
         return false;
     }
-    for (size_t i = 0; i < codigo.length(); i++) {
+    for (int i = 0; i < codigo.length(); i++) {
         char c = codigo[i];
         bool esNumero = (c >= '0' && c <= '9');
         if (!esNumero && c != '-' && c != 'X') {
@@ -223,48 +218,32 @@ int contarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos) {
     return actual + contarPrestamosActivos(prestamos, cantidadPrestamos - 1);
 }
 
-// ----- MATRIZ (REQUERIMIENTO OBLIGATORIO) -----
+// ----- MATRIZ -----
 
-// Genera un resumen en formato de matriz [Meses][Categorías]
-void generarMatrizResumenPrestamos(const Prestamo prestamos[], int cantidadPrestamos,
-                                    const Libro libros[], int cantidadLibros) {
-    // Declaración e inicialización de la matriz bidimensional
-    int matrizResumen[MESES][CATEGORIAS] = {0};
-    string nombresCategorias[CATEGORIAS] = {"Ficción", "Ciencia", "Historia", "Tecnología", "Otros"};
+// Muestra cuántos préstamos hubo en cada mes, separados en activos y devueltos
+void mostrarMatrizPorMes(const Prestamo prestamos[], int cantidadPrestamos) {
+    // 12 filas (una por mes) y 2 columnas (0 = activos, 1 = devueltos)
+    int matriz[12][2] = {0};
 
-    // Llenar la matriz con la información de los préstamos
+    // Recorro los préstamos y sumo 1 en la celda que corresponda
     for (int i = 0; i < cantidadPrestamos; i++) {
-        int mes = prestamos[i].fechaPrestamo.mes - 1; // Índice del mes (0-11)
+        int mes = prestamos[i].fechaPrestamo.mes - 1;   // mes 1 va en la fila 0
 
-        if (mes >= 0 && mes < MESES) {
-            int posLibro = buscarLibro(libros, cantidadLibros, prestamos[i].codigoLibro);
-            if (posLibro != -1) {
-                int cat = libros[posLibro].categoriaIndex;
-                if (cat >= 0 && cat < CATEGORIAS) {
-                    matrizResumen[mes][cat]++;
-                } else {
-                    matrizResumen[mes][CATEGORIAS - 1]++; // Categoría por defecto: Otros
-                }
+        if (mes >= 0 && mes < 12) {
+            if (prestamos[i].activo) {
+                matriz[mes][0]++;
+            } else {
+                matriz[mes][1]++;
             }
         }
     }
 
-    // Imprimir la matriz
-    cout << "\n=== MATRIZ RESUMEN DE PRÉSTAMOS POR MES Y CATEGORÍA ===" << endl;
-    cout << setw(10) << "Mes";
-    for (int j = 0; j < CATEGORIAS; j++) {
-        cout << setw(12) << nombresCategorias[j];
+    // Imprimo la matriz
+    cout << "\n=== PRESTAMOS POR MES ===" << endl;
+    cout << "Mes\tActivos\tDevueltos" << endl;
+    for (int i = 0; i < 12; i++) {
+        cout << (i + 1) << "\t" << matriz[i][0] << "\t" << matriz[i][1] << endl;
     }
-    cout << endl;
-
-    for (int i = 0; i < MESES; i++) {
-        cout << setw(6) << "Mes " << setw(2) << (i + 1) << " |";
-        for (int j = 0; j < CATEGORIAS; j++) {
-            cout << setw(12) << matrizResumen[i][j];
-        }
-        cout << endl;
-    }
-    cout << "=========================================================\n" << endl;
 }
 
 // ----- ARCHIVOS -----
