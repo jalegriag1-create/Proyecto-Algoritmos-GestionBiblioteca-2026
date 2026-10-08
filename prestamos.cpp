@@ -62,6 +62,7 @@ void mostrarLibroMasPrestado(const Prestamo prestamos[], int cantidadPrestamos,
                              const Libro libros[], int cantidadLibros);
 void mostrarCantidadLibros(const Libro libros[], int cantidadLibros);
 int contarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos);
+int contarPrestamosDeUsuario(const Prestamo prestamos[], int cantidadPrestamos, string idUsuario);
 void mostrarMatrizPorMes(const Prestamo prestamos[], int cantidadPrestamos);
 void guardarPrestamos(const Prestamo prestamos[], int cantidadPrestamos);
 int cargarPrestamos(Prestamo prestamos[]);
@@ -373,6 +374,18 @@ void mostrarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos,
     if (encontrados == 0) {
         cout << "No hay libros prestados actualmente." << endl;
     }
+}
+// Cuenta cuántos préstamos activos tiene un usuario
+int contarPrestamosDeUsuario(const Prestamo prestamos[], int cantidadPrestamos, string idUsuario) {
+    idUsuario = aMayusculas(idUsuario);
+    int total = 0;
+
+    for (int i = 0; i < cantidadPrestamos; i++) {
+        if (prestamos[i].idUsuario == idUsuario && prestamos[i].activo) {
+            total++;
+        }
+    }
+    return total;
 }
 
 // Muestra el historial de préstamos de un solo usuario
