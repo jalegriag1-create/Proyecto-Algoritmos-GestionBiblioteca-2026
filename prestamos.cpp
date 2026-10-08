@@ -44,6 +44,7 @@ bool existeIdPrestamo(const vector<Prestamo>& prestamos, int idPrestamo);
 string aMayusculas(string texto);
 bool validarCodigoLibro(string codigo);
 bool validarIdUsuario(string id);
+void buscarPrestamosPorTitulo(const vector<Prestamo>& prestamos, const vector<Libro>& libros, string texto);
 bool validarFecha(Fecha f);
 bool fechaEsAnterior(Fecha a, Fecha b);
 bool crearPrestamo(vector<Prestamo>& prestamos, vector<Libro>& libros,
@@ -56,6 +57,7 @@ void mostrarMatrizPorMes(const vector<Prestamo>& prestamos);
 void guardarPrestamos(const vector<Prestamo>& prestamos);
 int cargarPrestamos(vector<Prestamo>& prestamos);
 void recalcularDisponibilidad(vector<Libro>& libros, const vector<Prestamo>& prestamos);
+int iniciarPrestamos(vector<Prestamo>& prestamos, vector<Libro>& libros);
 
 // ===== MÓDULO PRÉSTAMOS =====
 
@@ -136,6 +138,44 @@ bool validarIdUsuario(string id) {
         }
     }
     return true;
+}
+
+// Busca los préstamos cuyo libro tiene el texto dado dentro de su título
+// (sin importar si se escribe en mayúsculas o minúsculas)
+void buscarPrestamosPorTitulo(const vector<Prestamo>& prestamos, const vector<Libro>& libros, string texto) {
+    texto = aMayusculas(texto);
+    cout << "\n--- PRÉSTAMOS CUYO LIBRO CONTIENE \"" << texto << "\" ---" << endl;
+
+    int cantidad = prestamos.size();
+    int encontrados = 0;
+
+    for (int i = 0; i < cantidad; i++) {
+        int pos = buscarLibroPorCodigo(libros, prestamos[i].codigoLibro);
+
+        if (pos != -1) {
+            string titulo = aMayusculas(libros[pos].titulo);
+
+            // find devuelve string::npos cuando el texto no está dentro del título
+            if (titulo.find(texto) != string::npos) {
+                string estado;
+                if (prestamos[i].activo) {
+                    estado = "ACTIVO";
+                } else {
+                    estado = "DEVUELTO";
+                }
+
+                cout << "ID Préstamo: " << prestamos[i].idPrestamo
+                     << " | Libro: " << libros[pos].titulo
+                     << " | Usuario: " << prestamos[i].idUsuario
+                     << " | Estado: " << estado << endl;
+                encontrados++;
+            }
+        }
+    }
+
+    if (encontrados == 0) {
+        cout << "No se encontraron préstamos con ese título." << endl;
+    }
 }
 
 // ----- FECHAS -----
@@ -388,6 +428,11 @@ int cargarPrestamos(vector<Prestamo>& prestamos) {
     int cantidad;
     archivo >> cantidad;
 
+    // Si la primera lectura falla (archivo vacío o dañado), empezamos en 0
+    if (archivo.fail()) {
+        return 0;
+    }
+
     if (cantidad > MAX_PRESTAMOS) {
         cantidad = MAX_PRESTAMOS;
     }
@@ -406,11 +451,16 @@ int cargarPrestamos(vector<Prestamo>& prestamos) {
                 >> p.fechaDevolucion.mes
                 >> p.fechaDevolucion.anio
                 >> p.activo;
+
+        // Si una línea está incompleta, dejamos de leer
+        if (archivo.fail()) {
+            break;
+        }
         prestamos.push_back(p);
     }
 
     archivo.close();
-    return cantidad;
+    return prestamos.size();
 }
 
 // Después de cargar los archivos, recalcula cuántos ejemplares hay disponibles:
@@ -431,4 +481,12 @@ void recalcularDisponibilidad(vector<Libro>& libros, const vector<Prestamo>& pre
             }
         }
     }
+}
+
+// Se llama una sola vez al iniciar el programa:
+// carga prestamos.txt y deja la disponibilidad de los libros al día
+int iniciarPrestamos(vector<Prestamo>& prestamos, vector<Libro>& libros) {
+    int cargados = cargarPrestamos(prestamos);
+    recalcularDisponibilidad(libros, prestamos);
+    return cargados;
 }
