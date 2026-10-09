@@ -11,6 +11,8 @@ struct Biblioteca {
     moduloCatalogo::Catalogo catalogo;
     vector<moduloUsuarios::Usuario> usuarios;
     moduloPrestamos::Libro libros[moduloPrestamos::MAX_LIBROS];
+    string autores[moduloPrestamos::MAX_LIBROS];
+    string signaturas[moduloPrestamos::MAX_LIBROS];
     int cantidadLibros;
     moduloPrestamos::Prestamo prestamos[moduloPrestamos::MAX_PRESTAMOS];
     int cantidadPrestamos;
@@ -116,8 +118,94 @@ bool agregarLibro(Biblioteca& b, string isbn, const string& titulo, const string
     b.libros[b.cantidadLibros].titulo = titulo;
     b.libros[b.cantidadLibros].cantidadTotal = cantidad;
     b.libros[b.cantidadLibros].cantidadDisponible = cantidad;
+    b.autores[b.cantidadLibros] = autor;
+    b.signaturas[b.cantidadLibros] = signatura;
     b.cantidadLibros++;
     return true;
+}
+
+string limpiarCampo(string texto) {
+    for (size_t i = 0; i < texto.size(); i++) {
+        if (texto[i] == '|' || texto[i] == '\n' || texto[i] == '\r') {
+            texto[i] = ' ';
+        }
+    }
+    return texto;
+}
+
+vector<string> separarCampos(const string& linea) {
+    vector<string> campos;
+    string campo;
+    istringstream entrada(linea);
+    while (getline(entrada, campo, '|')) {
+        campos.push_back(campo);
+    }
+    return campos;
+}
+
+void guardarLibros(const Biblioteca& b) {
+    string datos;
+    for (int i = 0; i < b.cantidadLibros; i++) {
+        datos += limpiarCampo(b.libros[i].codigo) + "|" + limpiarCampo(b.libros[i].titulo) + "|" +
+                 limpiarCampo(b.autores[i]) + "|" + limpiarCampo(b.signaturas[i]) + "|" +
+                 to_string(b.libros[i].cantidadTotal) + "\n";
+    }
+    moduloPersistencia::guardarDatos("libros.txt", datos);
+}
+
+void guardarUsuarios(const Biblioteca& b) {
+    string datos;
+    for (size_t i = 0; i < b.usuarios.size(); i++) {
+        datos += to_string(b.usuarios[i].id) + "|" + limpiarCampo(b.usuarios[i].nombre) + "|" +
+                 limpiarCampo(b.usuarios[i].identificador) + "\n";
+    }
+    moduloPersistencia::guardarDatos("usuarios.txt", datos);
+}
+
+void guardarTodo(const Biblioteca& b) {
+    guardarLibros(b);
+    guardarUsuarios(b);
+    moduloPrestamos::guardarPrestamos(b.prestamos, b.cantidadPrestamos);
+}
+
+void cargarLibros(Biblioteca& b) {
+    string datos = moduloPersistencia::cargarDatos("libros.txt");
+    istringstream entrada(datos);
+    string linea;
+    streambuf* original = cout.rdbuf();
+    ostringstream silencio;
+    cout.rdbuf(silencio.rdbuf());
+    while (getline(entrada, linea)) {
+        vector<string> campos = separarCampos(linea);
+        if (campos.size() != 5) {
+            continue;
+        }
+        try {
+            agregarLibro(b, campos[0], campos[1], campos[2], campos[3], stoi(campos[4]));
+        } catch (...) {
+        }
+    }
+    cout.rdbuf(original);
+}
+
+void cargarUsuarios(Biblioteca& b) {
+    string datos = moduloPersistencia::cargarDatos("usuarios.txt");
+    istringstream entrada(datos);
+    string linea;
+    streambuf* original = cout.rdbuf();
+    ostringstream silencio;
+    cout.rdbuf(silencio.rdbuf());
+    while (getline(entrada, linea)) {
+        vector<string> campos = separarCampos(linea);
+        if (campos.size() != 3) {
+            continue;
+        }
+        try {
+            moduloUsuarios::registrarUsuario(b.usuarios, stoi(campos[0]), campos[1], campos[2]);
+        } catch (...) {
+        }
+    }
+    cout.rdbuf(original);
 }
 
 void sincronizarReportes(const Biblioteca& b) {
@@ -158,7 +246,9 @@ void opcionRegistrarLibro(Biblioteca& b) {
     leerLinea("Autor: ", autor);
     leerLinea("Signatura topografica: ", signatura);
     leerEntero("Cantidad de ejemplares: ", cantidad);
-    agregarLibro(b, isbn, titulo, autor, signatura, cantidad);
+    if (agregarLibro(b, isbn, titulo, autor, signatura, cantidad)) {
+        guardarLibros(b);
+    }
 }
 
 void opcionBuscarLibro(Biblioteca& b) {
@@ -176,7 +266,11 @@ void opcionRegistrarUsuario(Biblioteca& b) {
         cout << "Error: el identificador debe ser una U seguida de 3 numeros.\n";
         return;
     }
+    size_t antes = b.usuarios.size();
     moduloUsuarios::registrarUsuario(b.usuarios, (int)b.usuarios.size() + 1, nombre, identificador);
+    if (b.usuarios.size() > antes) {
+        guardarUsuarios(b);
+    }
 }
 
 void opcionBuscarUsuario(Biblioteca& b) {
@@ -312,10 +406,17 @@ void menuReportes(Biblioteca& b) {
 void cargarDatosIniciales(Biblioteca& b) {
     b.cantidadLibros = 0;
     b.cantidadPrestamos = 0;
-    agregarLibro(b, "978-0001", "Introduccion a los Algoritmos", "Thomas Cormen", "004.1 COR", 2);
-    agregarLibro(b, "978-0002", "C++ para principiantes", "Bjarne Stroustrup", "005.13 STR", 1);
-    moduloUsuarios::registrarUsuario(b.usuarios, 1, "Ana Lopez", "U001");
-    moduloUsuarios::registrarUsuario(b.usuarios, 2, "Carlos Perez", "U002");
+    cargarLibros(b);
+    cargarUsuarios(b);
+    if (b.cantidadLibros == 0 && b.usuarios.empty()) {
+        cout << "No hay datos guardados. Se cargan datos de ejemplo.\n";
+        agregarLibro(b, "978-0001", "Introduccion a los Algoritmos", "Thomas Cormen", "004.1 COR", 2);
+        agregarLibro(b, "978-0002", "C++ para principiantes", "Bjarne Stroustrup", "005.13 STR", 1);
+        moduloUsuarios::registrarUsuario(b.usuarios, 1, "Ana Lopez", "U001");
+        moduloUsuarios::registrarUsuario(b.usuarios, 2, "Carlos Perez", "U002");
+    } else {
+        cout << "Datos cargados: " << b.cantidadLibros << " libros y " << b.usuarios.size() << " usuarios.\n";
+    }
     moduloPrestamos::iniciarPrestamos(b.prestamos, b.cantidadPrestamos, b.libros, b.cantidadLibros);
     for (int i = 0; i < b.cantidadPrestamos; i++) {
         moduloUsuarios::Usuario* usuario = moduloUsuarios::buscarUsuarioPorIdentificador(b.usuarios, b.prestamos[i].idUsuario);
@@ -362,6 +463,6 @@ void menuPrincipal() {
             default: cout << "Opcion invalida.\n";
         }
     }
-    moduloPrestamos::guardarPrestamos(b.prestamos, b.cantidadPrestamos);
-    cout << "Hasta luego.\n";
+    guardarTodo(b);
+    cout << "Datos guardados. Hasta luego.\n";
 }
