@@ -17,68 +17,17 @@ namespace moduloUsuarios {
 }
 
 namespace moduloReportes {
-#include "reportes_persistencia.cpp"
+#include "reportes.cpp"
 }
 
+namespace moduloPersistencia {
+#include "persistencia.cpp"
+}
+
+#include "menu.cpp"
+
 int main() {
-    std::cout << "=== Sistema de Gestion de Biblioteca ===\n\n";
-
-    moduloCatalogo::Catalogo catalogo;
-    catalogo.registrarLibro("978-0001", "Introduccion a los Algoritmos", "Thomas Cormen", "004.1 COR");
-    catalogo.registrarLibro("978-0002", "C++ para principiantes", "Bjarne Stroustrup", "005.13 STR");
-    catalogo.listarCatalogo();
-
-    std::vector<moduloUsuarios::Usuario> usuarios;
-    moduloUsuarios::registrarUsuario(usuarios, 1, "Ana Lopez", "U001");
-    moduloUsuarios::registrarUsuario(usuarios, 2, "Carlos Perez", "U002");
-
-    moduloUsuarios::Usuario* usuario = moduloUsuarios::buscarUsuarioPorIdentificador(usuarios, "U001");
-    if (usuario != nullptr) {
-        moduloUsuarios::agregarPrestamoAHistorial(*usuario, "978-0001");
-    }
-
-    moduloUsuarios::listarUsuarios(usuarios);
-
-    moduloPrestamos::Libro libros[moduloPrestamos::MAX_LIBROS];
-    libros[0].codigo = "978-0001";
-    libros[0].titulo = "Introduccion a los Algoritmos";
-    libros[0].cantidadTotal = 1;
-    libros[0].cantidadDisponible = 1;
-
-    moduloPrestamos::Prestamo prestamos[moduloPrestamos::MAX_PRESTAMOS];
-    int cantidadPrestamos = 0;
-    int cargados = moduloPrestamos::iniciarPrestamos(prestamos, cantidadPrestamos, libros, 1);
-    std::cout << "Prestamos cargados del archivo: " << cargados << '\n';
-    int idNuevo = cantidadPrestamos + 1;
-    moduloPrestamos::Fecha fechaPrestamo{18, 9, 2026};
-    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   idNuevo, "U001", "978-0001", fechaPrestamo);
-    std::cout << "Prestamos activos: "
-              << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
-    moduloPrestamos::mostrarPrestamosActivos(prestamos, cantidadPrestamos, libros, 1);
-    moduloPrestamos::mostrarCantidadLibros(libros, 1);
-    // Pruebas críticas: libro inexistente y libro sin ejemplares disponibles
-    int idNuevo2 = cantidadPrestamos + 1;
-    int idNuevo3 = cantidadPrestamos + 2;
-    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   idNuevo2, "U002", "978-9999", fechaPrestamo);
-    moduloPrestamos::crearPrestamo(prestamos, cantidadPrestamos, libros, 1,
-                                   idNuevo3, "U002", "978-0001", fechaPrestamo);
-    moduloPrestamos::Fecha fechaDevolucion{25, 9, 2026};
-    moduloPrestamos::registrarDevolucion(prestamos, cantidadPrestamos, libros, 1,
-                                         idNuevo, fechaDevolucion);
-    std::cout << "Prestamos activos: "
-              << moduloPrestamos::contarPrestamosActivos(prestamos, cantidadPrestamos) << '\n';
-    moduloPrestamos::mostrarPrestamosPorUsuario(prestamos, cantidadPrestamos, "U001");
-        std::cout << "Prestamos activos de U001: "
-              << moduloPrestamos::contarPrestamosDeUsuario(prestamos, cantidadPrestamos, "U001") << '\n';
-    moduloPrestamos::mostrarLibroMasPrestado(prestamos, cantidadPrestamos, libros, 1);
-    moduloPrestamos::mostrarMatrizPorMes(prestamos, cantidadPrestamos);
-
-    std::cout << "\n--- REPORTES Y PERSISTENCIA ---\n";
-    moduloReportes::generarReportePrestamos("18/09/2026", "25/09/2026");
-    moduloReportes::obtenerLibrosMasSolicitados(5);
-
-    std::cout << "\n=== Ejecucion finalizada ===\n";
+    std::cout << "=== Sistema de Gestion de Biblioteca ===\n";
+    menuPrincipal();
     return 0;
 }
