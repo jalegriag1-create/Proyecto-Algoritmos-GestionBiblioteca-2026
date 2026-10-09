@@ -26,8 +26,8 @@ struct UsuarioTemp {
     string nombre;
 } usuarios[100];
 
-int buscarLibro(int codigo) { return 0; }
-int buscarUsuario(int id) { return 0; }
+int buscarLibro(int codigo) { return codigo; }
+int buscarUsuario(int id) { return id; }
 
 // --- 1. GENERAR ESTADÍSTICAS ---
 
