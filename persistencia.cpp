@@ -1,12 +1,23 @@
 #include "persistencia.h"
 #include <iostream>
-
-// --- 2. GUARDAR Y CARGAR ARCHIVOS ---
+#include <fstream>
+#include <sstream>
 
 bool guardarDatos(std::string nombreArchivo, std::string datos) {
-    return true;
+    std::ofstream archivo(nombreArchivo.c_str());
+    if (!archivo.is_open()) {
+        return false;
+    }
+    archivo << datos;
+    return archivo.good();
 }
 
 std::string cargarDatos(std::string nombreArchivo) {
-    return "";
+    std::ifstream archivo(nombreArchivo.c_str());
+    if (!archivo.is_open()) {
+        return "";
+    }
+    std::stringstream contenido;
+    contenido << archivo.rdbuf();
+    return contenido.str();
 }
