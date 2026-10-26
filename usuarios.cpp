@@ -84,6 +84,12 @@ void registrarUsuario(vector<Usuario>& usuarios, int id, const string& nombre, c
         cout << "Error: ya existe un usuario con el identificador " << identificador << ".\n";
         return;
     }
+    for (const Usuario& u : usuarios) {
+        if (u.id == id) {
+            cout << "Error: ya existe un usuario con el id " << id << ".\n";
+            return;
+        }
+    }
     Usuario nuevo;
     nuevo.id = id;
     nuevo.nombre = nombre;
@@ -208,6 +214,7 @@ int main() {
     registrarUsuario(usuarios, 1, "Ana Lopez", "U001");
     registrarUsuario(usuarios, 2, "Carlos Perez", "U002");
     registrarUsuario(usuarios, 1, "Duplicado", "U001");      // debe rechazar
+    registrarUsuario(usuarios, 2, "Otro Distinto", "U777");
     registrarUsuario(usuarios, 3, "Sin Identificador", "");  // caso invalido: debe rechazar
     registrarUsuario(usuarios, 4, "Ana Martinez", "U003");
  

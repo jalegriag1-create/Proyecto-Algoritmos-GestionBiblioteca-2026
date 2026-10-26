@@ -210,7 +210,7 @@ void cargarUsuarios(Biblioteca& b) {
 
 void sincronizarReportes(const Biblioteca& b) {
     int nl = b.cantidadLibros < moduloReportes::MAX ? b.cantidadLibros : moduloReportes::MAX;
-    int nu = (int)b.usuarios.size() < moduloReportes::MAX ? (int)b.usuarios.size() : moduloReportes::MAX;
+    int nu = (int)b.usuarios.size() < moduloReportes::MAX_USUARIOS_REP ? (int)b.usuarios.size() : moduloReportes::MAX_USUARIOS_REP;
     moduloReportes::nLibros = nl;
     for (int i = 0; i < nl; i++) {
         moduloReportes::libros[i].total = b.libros[i].cantidadTotal;
@@ -222,7 +222,7 @@ void sincronizarReportes(const Biblioteca& b) {
         moduloReportes::usuarios[i].nombre = b.usuarios[i].nombre;
     }
     int n = 0;
-    for (int j = 0; j < b.cantidadPrestamos && n < moduloReportes::MAX; j++) {
+    for (int j = 0; j < b.cantidadPrestamos && n < moduloReportes::MAX_PRESTAMOS_REP; j++) {
         int pl = moduloPrestamos::buscarLibroPorCodigo(b.libros, b.cantidadLibros, b.prestamos[j].codigoLibro);
         int pu = indiceUsuario(b, b.prestamos[j].idUsuario);
         if (pl < 0 || pl >= nl || pu < 0 || pu >= nu) {
@@ -236,6 +236,12 @@ void sincronizarReportes(const Biblioteca& b) {
         n++;
     }
     moduloReportes::nPrestamos = n;
+}
+
+void sincronizarCatalogo(Biblioteca& b) {
+    for (int i = 0; i < b.cantidadLibros; i++) {
+        b.catalogo.actualizarDisponibilidad(b.libros[i].codigo, b.libros[i].cantidadDisponible > 0);
+    }
 }
 
 void opcionRegistrarLibro(Biblioteca& b) {
@@ -312,6 +318,7 @@ void opcionPrestarLibro(Biblioteca& b) {
                                                  siguienteIdPrestamo(b), identificador, codigo, fecha);
     if (creado) {
         moduloUsuarios::agregarPrestamoAHistorial(*usuario, codigo);
+        sincronizarCatalogo(b);
     }
 }
 
@@ -323,6 +330,7 @@ void opcionDevolverLibro(Biblioteca& b) {
         return;
     }
     moduloPrestamos::registrarDevolucion(b.prestamos, b.cantidadPrestamos, b.libros, b.cantidadLibros, id, fecha);
+    sincronizarCatalogo(b);
     moduloPrestamos::guardarPrestamos(b.prestamos, b.cantidadPrestamos);
 }
 
@@ -424,6 +432,7 @@ void cargarDatosIniciales(Biblioteca& b) {
             moduloUsuarios::agregarPrestamoAHistorial(*usuario, b.prestamos[i].codigoLibro);
         }
     }
+    sincronizarCatalogo(b);
 }
 
 void menuPrincipal() {
