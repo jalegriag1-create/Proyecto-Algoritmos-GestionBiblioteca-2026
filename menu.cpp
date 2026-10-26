@@ -210,7 +210,7 @@ void cargarUsuarios(Biblioteca& b) {
 
 void sincronizarReportes(const Biblioteca& b) {
     int nl = b.cantidadLibros < moduloReportes::MAX ? b.cantidadLibros : moduloReportes::MAX;
-    int nu = (int)b.usuarios.size() < moduloReportes::MAX ? (int)b.usuarios.size() : moduloReportes::MAX;
+    int nu = (int)b.usuarios.size() < moduloReportes::MAX_USUARIOS_REP ? (int)b.usuarios.size() : moduloReportes::MAX_USUARIOS_REP;
     moduloReportes::nLibros = nl;
     for (int i = 0; i < nl; i++) {
         moduloReportes::libros[i].total = b.libros[i].cantidadTotal;
@@ -222,7 +222,7 @@ void sincronizarReportes(const Biblioteca& b) {
         moduloReportes::usuarios[i].nombre = b.usuarios[i].nombre;
     }
     int n = 0;
-    for (int j = 0; j < b.cantidadPrestamos && n < moduloReportes::MAX; j++) {
+    for (int j = 0; j < b.cantidadPrestamos && n < moduloReportes::MAX_PRESTAMOS_REP; j++) {
         int pl = moduloPrestamos::buscarLibroPorCodigo(b.libros, b.cantidadLibros, b.prestamos[j].codigoLibro);
         int pu = indiceUsuario(b, b.prestamos[j].idUsuario);
         if (pl < 0 || pl >= nl || pu < 0 || pu >= nu) {

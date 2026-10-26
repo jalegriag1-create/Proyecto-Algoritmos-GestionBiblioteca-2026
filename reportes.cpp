@@ -7,24 +7,26 @@ using namespace std;
 int nLibros = 0;
 int nPrestamos = 0;
 const int MAX = 100;
+const int MAX_PRESTAMOS_REP = 200;
+const int MAX_USUARIOS_REP = 200;
 
 struct LibroTemp {
     int total;
     int disponibles;
     int veces;
     string titulo;
-} libros[100];
+} libros[MAX];
 
 struct PrestamoTemp {
     int codigoLibro;
     int idUsuario;
     string fecha;
     bool activo;
-} prestamos[100];
+} prestamos[MAX_PRESTAMOS_REP];
 
 struct UsuarioTemp {
     string nombre;
-} usuarios[100];
+} usuarios[MAX_USUARIOS_REP];
 
 int buscarLibro(int codigo) { return codigo; }
 int buscarUsuario(int id) { return id; }
