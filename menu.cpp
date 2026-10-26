@@ -238,6 +238,12 @@ void sincronizarReportes(const Biblioteca& b) {
     moduloReportes::nPrestamos = n;
 }
 
+void sincronizarCatalogo(Biblioteca& b) {
+    for (int i = 0; i < b.cantidadLibros; i++) {
+        b.catalogo.actualizarDisponibilidad(b.libros[i].codigo, b.libros[i].cantidadDisponible > 0);
+    }
+}
+
 void opcionRegistrarLibro(Biblioteca& b) {
     string isbn, titulo, autor, signatura;
     int cantidad;
@@ -312,6 +318,7 @@ void opcionPrestarLibro(Biblioteca& b) {
                                                  siguienteIdPrestamo(b), identificador, codigo, fecha);
     if (creado) {
         moduloUsuarios::agregarPrestamoAHistorial(*usuario, codigo);
+        sincronizarCatalogo(b);
     }
 }
 
@@ -323,6 +330,7 @@ void opcionDevolverLibro(Biblioteca& b) {
         return;
     }
     moduloPrestamos::registrarDevolucion(b.prestamos, b.cantidadPrestamos, b.libros, b.cantidadLibros, id, fecha);
+    sincronizarCatalogo(b);
     moduloPrestamos::guardarPrestamos(b.prestamos, b.cantidadPrestamos);
 }
 
@@ -424,6 +432,7 @@ void cargarDatosIniciales(Biblioteca& b) {
             moduloUsuarios::agregarPrestamoAHistorial(*usuario, b.prestamos[i].codigoLibro);
         }
     }
+    sincronizarCatalogo(b);
 }
 
 void menuPrincipal() {

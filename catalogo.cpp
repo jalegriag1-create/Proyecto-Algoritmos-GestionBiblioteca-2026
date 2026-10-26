@@ -102,6 +102,15 @@ public:
                  << (libro.disponible ? "Disponible" : "Prestado") << "\n";
         }
     }
+
+    void actualizarDisponibilidad(const string& isbn, bool disponible) {
+        for (auto& libro : catalogo) {
+            if (libro.isbn == isbn) {
+                libro.disponible = disponible;
+                return;
+            }
+        }
+    }
 };
 
 // ==========================================
