@@ -334,6 +334,53 @@ void opcionDevolverLibro(Biblioteca& b) {
     moduloPrestamos::guardarPrestamos(b.prestamos, b.cantidadPrestamos);
 }
 
+void opcionBuscarPorIsbn(Biblioteca& b) {
+    string isbn;
+    leerLinea("ISBN a buscar: ", isbn);
+    isbn = moduloPrestamos::aMayusculas(isbn);
+    b.catalogo.consultarPorIsbn(isbn);
+}
+
+void opcionModificarLibro(Biblioteca& b) {
+    string isbn, titulo, autor, signatura;
+    int cantidad;
+    leerLinea("ISBN del libro a modificar: ", isbn);
+    isbn = moduloPrestamos::aMayusculas(isbn);
+    int pos = moduloPrestamos::buscarLibroPorCodigo(b.libros, b.cantidadLibros, isbn);
+    if (pos == -1) {
+        cout << "Libro no encontrado.\n";
+        return;
+    }
+    leerLinea("Nuevo titulo: ", titulo);
+    leerLinea("Nuevo autor: ", autor);
+    leerLinea("Nueva signatura: ", signatura);
+    leerEntero("Nueva cantidad total: ", cantidad);
+
+    if (!moduloPrestamos::modificarCantidadLibro(b.libros, b.cantidadLibros, isbn, cantidad)) {
+        return;
+    }
+    if (!b.catalogo.editarLibro(isbn, titulo, autor, signatura)) {
+        return;
+    }
+    b.libros[pos].titulo = titulo;
+    b.autores[pos] = autor;
+    b.signaturas[pos] = signatura;
+    sincronizarCatalogo(b);
+    guardarLibros(b);
+    cout << "Libro modificado correctamente.\n";
+}
+
+void opcionOrdenarUsuarios(Biblioteca& b) {
+    vector<moduloUsuarios::Usuario> copia = b.usuarios;
+    moduloUsuarios::ordenarUsuariosPorNombre(copia);
+    moduloUsuarios::listarUsuarios(copia);
+}
+
+void opcionContarUsuariosConPrestamos(Biblioteca& b) {
+    int n = moduloUsuarios::contarUsuariosConPrestamos(b.usuarios);
+    cout << "Usuarios con prestamos: " << n << "\n";
+}
+
 void menuReportes(Biblioteca& b) {
     int opcion = -1;
     while (opcion != 0) {
@@ -452,6 +499,10 @@ void menuPrincipal() {
         cout << "9. Devolver libro\n";
         cout << "10. Historial de prestamos\n";
         cout << "11. Reportes\n";
+        cout << "12. Buscar libro por ISBN\n";
+        cout << "13. Modificar libro\n";
+        cout << "14. Ordenar usuarios por nombre\n";
+        cout << "15. Contar usuarios con prestamos\n";
         cout << "0. Salir\n";
         if (!leerEntero("Opcion: ", opcion)) {
             break;
@@ -468,6 +519,10 @@ void menuPrincipal() {
             case 9: opcionDevolverLibro(b); break;
             case 10: moduloPrestamos::consultarPrestamos(b.prestamos, b.cantidadPrestamos); break;
             case 11: menuReportes(b); break;
+            case 12: opcionBuscarPorIsbn(b); break;
+            case 13: opcionModificarLibro(b); break;
+            case 14: opcionOrdenarUsuarios(b); break;
+            case 15: opcionContarUsuariosConPrestamos(b); break;
             case 0: break;
             default: cout << "Opcion invalida.\n";
         }
