@@ -54,6 +54,7 @@ bool crearPrestamo(Prestamo prestamos[], int &cantidadPrestamos,
 bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
                          Libro libros[], int cantidadLibros,
                          int idPrestamo, Fecha fechaDevolucion);
+bool modificarCantidadLibro(Libro libros[], int cantidadLibros, const string& codigo, int nuevaCantidad);
 void consultarPrestamos(const Prestamo prestamos[], int cantidadPrestamos);
 void mostrarPrestamosActivos(const Prestamo prestamos[], int cantidadPrestamos,
                              const Libro libros[], int cantidadLibros);
@@ -324,6 +325,28 @@ bool registrarDevolucion(Prestamo prestamos[], int cantidadPrestamos,
 
     cout << "[ERROR] No existe un préstamo activo con el número " << idPrestamo << "." << endl;
     return false;
+}
+
+bool modificarCantidadLibro(Libro libros[], int cantidadLibros, const string& codigo, int nuevaCantidad) {
+    string codigoNormalizado = aMayusculas(codigo);
+    int pos = buscarLibroPorCodigo(libros, cantidadLibros, codigoNormalizado);
+    if (pos == -1) {
+        cout << "[ERROR] El libro " << codigoNormalizado << " no existe." << endl;
+        return false;
+    }
+    if (nuevaCantidad < 1) {
+        cout << "[ERROR] La cantidad total debe ser al menos 1." << endl;
+        return false;
+    }
+    int prestados = libros[pos].cantidadTotal - libros[pos].cantidadDisponible;
+    if (nuevaCantidad < prestados) {
+        cout << "[ERROR] No se puede reducir a " << nuevaCantidad << ": hay " << prestados << " ejemplares prestados actualmente." << endl;
+        return false;
+    }
+    libros[pos].cantidadTotal = nuevaCantidad;
+    libros[pos].cantidadDisponible = nuevaCantidad - prestados;
+    cout << "[ÉXITO] Cantidad del libro " << codigoNormalizado << " actualizada a " << nuevaCantidad << "." << endl;
+    return true;
 }
 
 // Muestra en consola el historial de préstamos
