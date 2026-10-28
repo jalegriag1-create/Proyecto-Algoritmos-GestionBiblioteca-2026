@@ -4,8 +4,7 @@
 
 using namespace std;
 
-class Libro {
-public:
+struct Libro {
     string isbn;
     string titulo;
     string autor;
@@ -90,6 +89,10 @@ public:
     }
 
     bool editarLibro(const std::string& isbn, const std::string& titulo, const std::string& autor, const std::string& signatura) {
+        if (titulo.find_first_not_of(' ') == string::npos) {
+            cout << "Error: el titulo no puede estar vacio.\n";
+            return false;
+        }
         for (auto& libro : catalogo) {
             if (libro.isbn == isbn) {
                 libro.titulo = titulo;
@@ -133,6 +136,13 @@ int main() {
     catalogo.buscarPorTitulo(terminoBusqueda);
 
     catalogo.listarCatalogo();
+
+    cout << "\n--- Probando editarLibro y consultarPorIsbn ---\n";
+    cout << (catalogo.editarLibro("9780307474728", "Cien anos de soledad (Edicion 2)", "Gabriel Garcia Marquez", "863.44 G216c") ? "true" : "false") << endl;
+    cout << (catalogo.editarLibro("0000000000", "No existe", "Nadie", "000.00") ? "true" : "false") << endl;
+    cout << (catalogo.editarLibro("9780451524935", "   ", "George Orwell", "823.912 O79n") ? "true" : "false") << endl;
+    catalogo.consultarPorIsbn("9780307474728");
+    catalogo.consultarPorIsbn("0000000000");
 
     return 0;
 }
