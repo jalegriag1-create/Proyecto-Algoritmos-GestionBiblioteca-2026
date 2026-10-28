@@ -352,6 +352,10 @@ void opcionModificarLibro(Biblioteca& b) {
         return;
     }
     leerLinea("Nuevo titulo: ", titulo);
+    if (titulo.find_first_not_of(' ') == string::npos) {
+        cout << "Error: el titulo no puede estar vacio.\n";
+        return;
+    }
     leerLinea("Nuevo autor: ", autor);
     leerLinea("Nueva signatura: ", signatura);
     leerEntero("Nueva cantidad total: ", cantidad);
