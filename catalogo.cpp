@@ -4,20 +4,14 @@
 
 using namespace std;
 
-// ==========================================
-// PARÁMETROS: Estructura de Datos (Campos)
-// ==========================================
-
 class Libro {
 public:
-    // Parámetros de descripción e identificación
-    string isbn;                 // Identificador único del libro
-    string titulo;                // Título de la obra
-    string autor;                 // Autor de la obra
-    string signaturaTopografica;  // Ubicación en estante (Ej: Dewey/LC)
-    bool disponible;              // Estado del ejemplar (true = en estantería)
+    string isbn;
+    string titulo;
+    string autor;
+    string signaturaTopografica;
+    bool disponible;
 
-    // Parámetros del constructor: valores necesarios para crear un Libro
     Libro(string _isbn, string _titulo, string _autor, string _signatura) {
         isbn = _isbn;
         titulo = _titulo;
@@ -27,22 +21,10 @@ public:
     }
 };
 
-// ==========================================
-// MÓDULO: Catálogo
-// ==========================================
-// Funciones:
-//   1. registrarLibro(isbn, titulo, autor, signatura)
-//      -> Agrega un nuevo libro al catálogo validando que el ISBN no esté vacío ni repetido.
-//   2. buscarPorTitulo(termino)
-//      -> Busca libros cuyo título contenga el término dado.
-//   3. listarCatalogo()
-//      -> Muestra todos los libros registrados.
-
 class Catalogo {
 private:
-    vector<Libro> catalogo; // Parámetro: colección interna de libros
+    vector<Libro> catalogo;
 
-    // Función auxiliar para verificar si un ISBN ya existe
     bool buscarPorIsbn(const string& isbn) const {
         for (const auto& libro : catalogo) {
             if (libro.isbn == isbn) {
@@ -53,15 +35,12 @@ private:
     }
 
 public:
-    // Función: registrarLibro con validaciones
     void registrarLibro(string isbn, string titulo, string autor, string signatura) {
-        // Validación 1: ISBN vacío
         if (isbn.empty() || isbn.find_first_not_of(' ') == string::npos) {
             cout << "❌ Error: El ISBN no puede estar vacio.\n";
             return;
         }
 
-        // Validación 2: ISBN repetido
         if (buscarPorIsbn(isbn)) {
             cout << "❌ Error: El libro con ISBN '" << isbn << "' ya se encuentra registrado.\n";
             return;
@@ -72,7 +51,6 @@ public:
         cout << "✔️ Libro '" << titulo << "' catalogado con exito.\n";
     }
 
-    // Función: buscarPorTitulo
     void buscarPorTitulo(string termino) {
         cout << "\n--- RESULTADOS DE BÚSQUEDA PARA: \"" << termino << "\" ---\n";
         bool encontrado = false;
@@ -88,7 +66,6 @@ public:
         if (!encontrado) cout << "No se encontraron coincidencia.\n";
     }
 
-    // Función: listarCatalogo
     void listarCatalogo() {
         cout << "\n--- CATÁLOGO COMPLETO ---\n";
         if (catalogo.empty()) {
@@ -111,33 +88,51 @@ public:
             }
         }
     }
-};
 
-// ==========================================
-// FUNCIÓN PRINCIPAL (Demostración)
-// ==========================================
+    bool editarLibro(const std::string& isbn, const std::string& titulo, const std::string& autor, const std::string& signatura) {
+        for (auto& libro : catalogo) {
+            if (libro.isbn == isbn) {
+                libro.titulo = titulo;
+                libro.autor = autor;
+                libro.signaturaTopografica = signatura;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void consultarPorIsbn(const std::string& isbn) {
+        for (const auto& libro : catalogo) {
+            if (libro.isbn == isbn) {
+                cout << "\n--- DATOS DEL LIBRO ---\n";
+                cout << "ISBN: " << libro.isbn << "\n";
+                cout << "Titulo: " << libro.titulo << "\n";
+                cout << "Autor: " << libro.autor << "\n";
+                cout << "Signatura: " << libro.signaturaTopografica << "\n";
+                cout << "Estado: " << (libro.disponible ? "Disponible" : "Prestado") << "\n";
+                return;
+            }
+        }
+        cout << "No se encontro ningun libro con ISBN '" << isbn << "'.\n";
+    }
+};
 
 int main() {
     Catalogo catalogo;
 
     cout << "=== MÓDULO DE CATÁLOGO ===\n\n";
 
-    // 1. Registros correctos
     catalogo.registrarLibro("9780307474728", "Cien anos de soledad", "Gabriel Garcia Marquez", "863.44 G216c");
     catalogo.registrarLibro("9780451524935", "1984", "George Orwell", "823.912 O79n");
 
-    // 2. Demostración de las nuevas validaciones de seguridad
     cout << "\n--- Probando Validaciones de ISBN ---\n";
-    catalogo.registrarLibro("", "Libro Invalido 1", "Autor Anonimo", "000.00 X000x"); // Intento con ISBN vacío
-    catalogo.registrarLibro("9780307474728", "Cien anos de soledad (Copia)", "Gabriel Garcia Marquez", "863.44 G216c"); // Intento con ISBN duplicado
+    catalogo.registrarLibro("", "Libro Invalido 1", "Autor Anonimo", "000.00 X000x");
+    catalogo.registrarLibro("9780307474728", "Cien anos de soledad (Copia)", "Gabriel Garcia Marquez", "863.44 G216c");
 
-    // 3. Llamar buscarPorTitulo desde el flujo principal
     string terminoBusqueda = "soledad";
     catalogo.buscarPorTitulo(terminoBusqueda);
 
-    // 4. Mostrar estado final del catálogo
     catalogo.listarCatalogo();
 
     return 0;
 }
-
