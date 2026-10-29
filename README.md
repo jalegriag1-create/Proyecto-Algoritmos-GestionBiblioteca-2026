@@ -1,33 +1,42 @@
-# Proyecto-Algoritmos-GestionBiblioteca-2026
-Sistema de gestión de biblioteca en C++ con control de catálogo, usuarios y préstamos. Proyecto Final - Algoritmos, UMG.
+# Sistema de Gestión de Biblioteca
+
+Proyecto Final de Algoritmos, UMG. Grupo 1, Sección A.
+
+Repositorio: https://github.com/jalegriag1-create/Proyecto-Algoritmos-GestionBiblioteca-2026
 
 ## Descripción
 
-Sistema de consola desarrollado en C++ para administrar el catálogo de libros, los usuarios (lectores) y la circulación de ejemplares (préstamos y devoluciones) de una biblioteca, con persistencia de datos en archivos.
-
-## Objetivo
-
-Centralizar y automatizar el control de disponibilidad, préstamos y devoluciones de una biblioteca, evitando depender de registros manuales y garantizando que la información se conserve entre ejecuciones del programa.
+Sistema de consola en C++ para administrar el catálogo de libros, los usuarios y los préstamos y devoluciones de una biblioteca, con persistencia de datos en archivos de texto.
 
 ## Módulos
 
-- **Catálogo** — registrar, editar, consultar y buscar libros; controlar disponibilidad y ubicación.
-- **Usuarios** — registrar lectores, validar identificadores y consultar historial básico.
-- **Préstamos** — crear préstamos, validar disponibilidad, registrar devoluciones y cambiar estados.
-- **Reportes/Persistencia** — generar estadísticas, guardar/cargar archivos e integrar consultas.
+- Catálogo: registrar, editar, consultar y buscar libros por título o ISBN.
+- Usuarios: registrar lectores, buscar por nombre, ordenar y consultar historial.
+- Préstamos: crear préstamos, validar disponibilidad y registrar devoluciones.
+- Reportes y persistencia: estadísticas, guardado y carga de archivos.
 
-## Tecnologías
+## Compilación
 
-- **Lenguaje:** C++
-- **Persistencia:** Archivos de texto (libros.txt, usuarios.txt, prestamos.txt)
-- **Estructuras obligatorias:** structs, arreglos, cadenas, recursividad, archivos
+g++ -std=c++17 main.cpp -o biblioteca
 
-## Estado actual
+## Ejecución
 
-🚧 En desarrollo — Proyecto 1, Grupo 1
+Windows: .\biblioteca.exe
+Los datos se guardan en libros.txt, usuarios.txt y prestamos.txt, en la misma carpeta del programa. Si no existen, el programa carga datos de ejemplo.
+
+## Datos de prueba
+
+- datos_ejemplo/: archivos listos para copiar junto al ejecutable.
+- pruebas/: archivos de entrada para repetir las pruebas.
+  Ejemplo: Get-Content pruebas\entrada_basicas.txt | .\biblioteca.exe
+
+## Estado
+
+Versión final de entrega.
 
 ## Integrantes
 
+- José Andrés Alegría Gonzalez
 - Andy Leonel Bethancourt Contreras
 - Eddy Manuel Castillo Álvarez
 - Javier Eduardo Melgar Blanco
